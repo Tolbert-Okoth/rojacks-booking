@@ -17,7 +17,6 @@ const getMenus = async (req, res) => {
     console.error(error); // Log the full error for yourself
     res.status(500).json({ 
       message: 'Server Error',
-      // Only send the detailed error in development mode
       error: process.env.NODE_ENV === 'development' ? error.message : {} 
     });
   }
@@ -29,7 +28,12 @@ const getMenus = async (req, res) => {
 const createMenuItem = async (req, res) => {
   const { itemName, description, price, category, restaurantId } = req.body;
   
-  const imageUrl = req.file ? `/uploads/${req.file.filename}` : null;
+  // --- THIS IS THE FIX ---
+  // Use the new BACKEND_URL variable to build a full, absolute URL
+  const imageUrl = req.file 
+    ? `${process.env.BACKEND_URL}/uploads/${req.file.filename}` 
+    : null;
+  // --- END OF FIX ---
 
   if (!itemName || !price || !category || !restaurantId) {
     return res.status(400).json({ message: 'Please provide all required fields' });
@@ -42,14 +46,13 @@ const createMenuItem = async (req, res) => {
       price,
       category,
       restaurantId,
-      imageUrl, // <-- Save the image URL
+      imageUrl, // <-- Save the full URL
     });
     res.status(201).json(menuItem);
   } catch (error) {
     console.error(error); // Log the full error for yourself
     res.status(500).json({ 
       message: 'Server Error',
-      // Only send the detailed error in development mode
       error: process.env.NODE_ENV === 'development' ? error.message : {} 
     });
   }
@@ -67,10 +70,13 @@ const updateMenuItem = async (req, res) => {
 
     const { itemName, description, price, category } = req.body;
     
+    // --- THIS IS THE FIX ---
     let imageUrl = menuItem.imageUrl; // Keep old image
     if (req.file) {
-      imageUrl = `/uploads/${req.file.filename}`; // Set new image path
+      // Build a full, absolute URL
+      imageUrl = `${process.env.BACKEND_URL}/uploads/${req.file.filename}`;
     }
+    // --- END OF FIX ---
 
     const updatedMenuItem = await menuItem.update({
       itemName: itemName || menuItem.itemName,
@@ -81,12 +87,10 @@ const updateMenuItem = async (req, res) => {
     });
     
     res.status(200).json(updatedMenuItem);
-  } catch (error)
- {
+  } catch (error) {
     console.error(error); // Log the full error for yourself
     res.status(500).json({ 
       message: 'Server Error',
-      // Only send the detailed error in development mode
       error: process.env.NODE_ENV === 'development' ? error.message : {} 
     });
   }
@@ -110,12 +114,10 @@ const deleteMenuItem = async (req, res) => {
     console.error(error); // Log the full error for yourself
     res.status(500).json({ 
       message: 'Server Error',
-      // Only send the detailed error in development mode
       error: process.env.NODE_ENV === 'development' ? error.message : {} 
     });
   }
 };
-
 
 module.exports = {
   getMenus,
