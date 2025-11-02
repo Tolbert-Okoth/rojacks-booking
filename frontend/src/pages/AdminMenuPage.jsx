@@ -10,14 +10,17 @@ import {
   Form, 
   Card 
 } from 'react-bootstrap';
-import axios from 'axios'; // <-- 1. IMPORT AXIOS
+import axios from 'axios'; // We still need axios
 import { 
   useGetMenusQuery, 
   useDeleteMenuItemMutation 
 } from '../api/menuApiSlice';
 import { useGetRestaurantQuery } from '../api/restaurantApiSlice';
-import { useSelector } from 'react-redux'; // <-- 2. Import useSelector for token
-import { selectCurrentToken } from '../redux/authSlice'; // <-- 3. Import token selector
+import { useSelector } from 'react-redux'; 
+import { selectCurrentToken } from '../redux/authSlice';
+
+// --- 1. GET THE LIVE BACKEND URL FROM THE ENVIRONMENT ---
+const API_URL = import.meta.env.VITE_BACKEND_URL || '';
 
 const AdminMenuPage = () => {
   // --- 1. State for the "Create" form ---
@@ -25,7 +28,7 @@ const AdminMenuPage = () => {
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState('');
   const [category, setCategory] = useState('Main Course');
-  const [imageFile, setImageFile] = useState(null); // <-- 4. ADD FILE STATE
+  const [imageFile, setImageFile] = useState(null); 
   
   // State for loading/error
   const [isCreating, setIsCreating] = useState(false);
@@ -36,7 +39,7 @@ const AdminMenuPage = () => {
   // --- 2. Get Data ---
   const { data: menuItems, isLoading, isError, error, refetch } = useGetMenusQuery();
   const { data: restaurant, isLoading: isLoadingRestaurant } = useGetRestaurantQuery();
-  const token = useSelector(selectCurrentToken); // <-- 5. Get auth token
+  const token = useSelector(selectCurrentToken); // Get auth token
 
   // --- 3. Mutations ---
   const [
@@ -52,7 +55,6 @@ const AdminMenuPage = () => {
       return;
     }
 
-    // --- 6. CREATE FORM DATA ---
     const formData = new FormData();
     formData.append('itemName', itemName);
     formData.append('description', description);
@@ -60,24 +62,25 @@ const AdminMenuPage = () => {
     formData.append('category', category);
     formData.append('restaurantId', restaurant.id);
     if (imageFile) {
-      formData.append('image', imageFile); // 'image' must match route
+      formData.append('image', imageFile); 
     }
-    // --- END OF FORM DATA ---
 
     setIsCreating(true);
     setCreateError(null);
     setIsCreateSuccess(false);
 
     try {
-      // --- 7. USE AXIOS FOR MULTIPART/FORM-DATA ---
       const config = {
         headers: {
           'Content-Type': 'multipart/form-data',
-          'Authorization': `Bearer ${token}` // Send auth token
+          'Authorization': `Bearer ${token}`
         }
       };
 
-      await axios.post('/api/menus', formData, config);
+      // --- 2. THIS IS THE FIX ---
+      // We prepend the live URL to the request path
+      await axios.post(`${API_URL}/api/menus`, formData, config);
+      // --- END OF FIX ---
       
       setIsCreating(false);
       setIsCreateSuccess(true);
@@ -111,9 +114,8 @@ const AdminMenuPage = () => {
     }
   }, [isCreateSuccess]);
 
-  // --- 5. Render Logic ---
+  // --- 5. Render Logic (NO CHANGES BELOW) ---
   const renderMenuTable = () => {
-    // ... (This function is unchanged from before)
     if (isLoading || isLoadingRestaurant) {
       return (
         <Container className="text-center mt-5">
@@ -182,20 +184,17 @@ const AdminMenuPage = () => {
         </Col>
       </Row>
       
-      {/* --- Create Item Form --- */}
       <Row className="mb-4">
         <Col md={8} lg={6}>
           <Card style={{ backgroundColor: '#FFF8E1' }}>
             <Card.Body>
               <Card.Title as="h4" style={{ color: '#4E342E' }}>Add New Menu Item</Card.Title>
               
-              {/* --- 8. SHOW CREATE ERRORS --- */}
               {createError && <Alert variant="danger">{createError}</Alert>}
               
               <Form onSubmit={handleCreateSubmit}>
                 <Row>
                   <Col md={8}>
-                    {/* ... (Item Name input) ... */}
                     <Form.Group className="mb-2" controlId="itemName">
                       <Form.Label>Item Name</Form.Label>
                       <Form.Control
@@ -208,7 +207,6 @@ const AdminMenuPage = () => {
                     </Form.Group>
                   </Col>
                   <Col md={4}>
-                    {/* ... (Price input) ... */}
                     <Form.Group className="mb-2" controlId="price">
                       <Form.Label>Price (Ksh)</Form.Label>
                       <Form.Control
@@ -223,7 +221,6 @@ const AdminMenuPage = () => {
                 </Row>
                 
                 <Form.Group className="mb-2" controlId="category">
-                  {/* ... (Category select) ... */}
                    <Form.Label>Category</Form.Label>
                   <Form.Select
                     value={category}
@@ -236,7 +233,6 @@ const AdminMenuPage = () => {
                   </Form.Select>
                 </Form.Group>
                 
-                {/* --- 9. ADD IMAGE FILE INPUT --- */}
                 <Form.Group controlId="image" className="mb-3">
                   <Form.Label>Image</Form.Label>
                   <Form.Control
@@ -244,10 +240,8 @@ const AdminMenuPage = () => {
                     onChange={(e) => setImageFile(e.target.files[0])}
                   />
                 </Form.Group>
-                {/* --- END OF NEW BLOCK --- */}
 
                 <Form.Group className="mb-3" controlId="description">
-                  {/* ... (Description input) ... */}
                   <Form.Label>Description</Form.Label>
                   <Form.Control
                     as="textarea"
@@ -271,7 +265,6 @@ const AdminMenuPage = () => {
         </Col>
       </Row>
 
-      {/* --- Menu Item List --- */}
       <Row>
         <Col>
           <h4>Current Menu</h4>
