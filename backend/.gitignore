@@ -1,0 +1,14 @@
+# Dependencies
+node_modules/
+
+# Environment Variables
+# --- THIS IS THE MOST IMPORTANT LINE ---
+.env
+
+# Uploads
+# We don't want to commit all our user-uploaded images to Git
+uploads/
+
+# Log files
+*.log
+npm-debug.log*
